@@ -1,0 +1,66 @@
+edX Structure Generator
+
+Converts a CSV file into edX XML structure.
+
+Jolyon Bloomfield, August 2016
+
+Running the program:
+
+python structgen.py [-h] [-t | -w] [-s | -T] [-l LOCATION] [-c] [--clean] [-m] csv_file.csv
+
+"csv_file.csv" is the file to read in, and is the only mandatory argument.
+
+Options:
+
+* -h - Show help for the program
+* -t - Tests the CSV file, but does not write any structure to disk
+* -w - Write structure to disk (default)
+* -s - Write single file (course.xml)
+* -T - Write entire tree (/course/course.xml, /chapter/chapters etc) (default)
+* -l LOCATION - specify the location to output the course structure. If single file output is selected, creates "course.xml" in this location. If tree structure output is selected, creates /course, /chapter etc folders in this location.
+* -c - Display counts for each element type
+* -clean - Remove all content in /course, /chapter, /sequential and /vertical directories before outputting the XML tree (only used with -T)
+* -m - Output a map of the course structure to screen
+
+Examples:
+
+Test a CSV file for integrity, output a map of the structure, and specify counts of each elements.
+
+python structgen.py -t -c -m example/example.csv
+
+Output a single course.xml file with all the structure to the ./course/ location.
+
+python structgen.py -s -l course/ example/example.csv
+
+Write the entire tree structure in the present location. Remove any old structure files.
+
+python structgen.py --clean example/example.csv
+
+
+CSV file format:
+
+This is a comma separated file format. Each line corresponds to an entry in a table, and has an arbitrary number of fields, separated by commas. If you need commas in your field, put the field in quotation marks. If you need quotation marks, use double quotation marks. Note that spreadsheet programs such as Excel will automatically export CSV files correctly, so you can just type what you want in the individual cells.
+
+E.g:
+
+field1, field2, "field3 has a comma, in it", "field4 has "" quotation marks"
+
+* Each line is read and parsed. Each field is stripped of leading and trailing whitespace. Empty fields at the beginning of a line are ignored.
+* If the first non-empty field of a line begins with a #, that line is treated as a comment and ignored.
+* All remaining lines are read as follows:
+
+* entry_type, url_name, display_name, [extras]
+
+* entry_type can be one of "chapter", "sequential", "vertical", "html", "video" or "problem". For content entries (html, video and problems), all fields after url_name are ignored.
+* url_name can be anything without spaces. If it's left empty, a url_name will be automatically generated for that item (which will point nowhere if you use it for content). Duplicate url_names will be flagged.
+* display_name can be anything.
+* extras is a list of fields to be appended to the element (again, this does not apply to content). This may be used for open/due dates or other edX flags.
+
+A chapter entry opens a new chapter. A sequential entry begins a new sequential in the previously opened chapter. A vertical entry does likewise in the previously opened sequential. Content entries are placed in the previously opened vertical. An error will result if you try to place an element in a container that is not built for it. For example, opening a vertical inside a chapter will not work without opening a sequential first.
+
+
+Files:
+
+* README - this file.
+* structgen/structgen.py - the program that generates the course structure.
+* structgen/example/example.csv - an example CSV file to generate an example course structure, demonstrating various features of this program.
