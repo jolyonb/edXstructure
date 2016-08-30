@@ -77,7 +77,7 @@ class Node :
         if self.level < 4 :
             file_handle.write("    " * self.level + "</" + self.entry + ">\n")
 
-    def write_tree(self, location, file_handle) :
+    def write_tree(self, location, file_handle, filename="") :
         '''
         Outputs the node and all children to file in a tree structure
         '''
@@ -90,8 +90,13 @@ class Node :
 
         # We write out courses, chapters, sequentials and verticals
         if self.level < 4 :
+            # Come up with the filename to write
+            if filename == "" :
+                filename = os.path.join(location, self.entry, self.url_name + ".xml")
+            else :
+                filename = os.path.join(location, self.entry, filename)
             # Create a new file
-            with open(os.path.join(location, self.entry, self.url_name) + ".xml", "w") as f :
+            with open(filename, "w") as f :
                 # Write this entry
                 if self.level == 0 :
                     f.write("<course>\n")                    
@@ -116,13 +121,16 @@ def read_csv_file(file):
 def strip_line(line):
     '''
     Takes in a list of fields from a line in a csv file.
-    Trims all fields, and drops leading empty fields.
+    Trims all fields, and drops leading and trailing empty fields.
     '''
     newline = map(lambda s: s.strip(), line)
     for i in range(len(newline)) :
         if newline[i] != "" :
-            return newline[i:]
-    return []
+            result = newline[i:]
+            break
+    while result and result[-1] == "" :
+        result.pop()
+    return result
 
 def strip_data(data):
     '''
@@ -246,6 +254,8 @@ group2.add_argument("-T", "--tree", help="Write out an XML tree of files (defaul
 
 parser.add_argument("-l", dest="location", type=str, default="./",
     help="Set the output directory (defaults to \".\")")
+parser.add_argument("-o", dest="filename", type=str, default="course.xml",
+    help="Set the root file name (defaults to \"course.xml\")")
 parser.add_argument("-c", "--counts", help="Print counts of each item", 
     default=False, action="store_true")
 parser.add_argument("--clean", help="Clear all directories before writing (only for tree writes)", 
@@ -297,7 +307,7 @@ if args.write :
     print "Writing course structure."
     if args.tree == False :
         # Single file
-        with open(os.path.join(args.location, "course.xml"), "w") as f :
+        with open(os.path.join(args.location, args.filename), "w") as f :
             course.write_node(f)
     else :
         # Multi-file tree
@@ -314,6 +324,6 @@ if args.write :
         if seqs > 0 : make_dir(args.location, "sequential")
         if verticals > 0 : make_dir(args.location, "vertical")
         # Write the first node
-        course.write_tree(args.location, None)
+        course.write_tree(args.location, None, filename=args.filename)
 
     print "Structure written."
